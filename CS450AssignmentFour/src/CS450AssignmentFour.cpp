@@ -48,8 +48,15 @@ GLuint gSelectFlagLoc;
 GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
 
 
-GLuint gProgram;
+GLuint gProgram, gPhongProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
+
+GLint gNormalMatrixLoc;
+GLint gLightPositionLoc;
+GLint gEyeDirectionLoc;
+GLint gConstantAttenuationLoc;
+GLint gLinearAttenuationLoc;
+GLint gQuadraticAttenuationLoc;
 
 // camera transforms
 mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
@@ -97,6 +104,24 @@ enum menu_val {
 	ITEM_CAMERA_TRANSLATION_Z,
 	ITEM_DOLLY
 };
+
+struct LightProperties {
+		bool isEnabled;
+		bool isLocal;
+		bool isSpot;
+		vec3 ambient;
+		vec3 color;
+		vec3 position;
+		vec3 halfVector;
+		vec3 coneDirection;
+		float spotCosCutoff;
+		float spotExponent;
+		float constantAttenuation;
+		float linearAttenuation;
+		float quadraticAttenuation;
+};
+
+vector<LightProperties> gLights;
 
 // does all vao/vbo setup for obj_data[i]
 void
@@ -328,6 +353,16 @@ init_manips(void) {
 
 }
 
+void init_light( void )
+{
+	glUseProgram(gPhongProgram);
+	gNormalMatrixLoc = glGetAttribLocation(gProgram, "NormalMatrix");
+	gLightPositionLoc = glGetAttribLocation(gProgram, "LightPosition");
+	gEyeDirectionLoc = glGetAttribLocation(gProgram, "EyeDirection");
+	gConstantAttenuationLoc = glGetAttribLocation(gProgram, "ConstantAttenuation");
+	gLinearAttenuationLoc = glGetAttribLocation(gProgram, "LinearAttenuation");
+	gQuadraticAttenuationLoc = glGetAttribLocation(gProgram, "QuadraticAttenuation");
+}
 // OpenGL initialization
 void
 init(mat4 projection)
@@ -338,7 +373,8 @@ init(mat4 projection)
 	gCameraTranslate = Angel::identity();
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
-    gProgram = InitShader( "./src/vshader.glsl", "./src/fshader.glsl" );
+    gProgram = InitShader("./src/vshader.glsl", "./src/fshader.glsl");
+	gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
     glUseProgram(gProgram);
 	gVertLoc = glGetAttribLocation(gProgram, "vPosition");
 	gNormLoc = glGetAttribLocation(gProgram, "vNormal");
@@ -347,6 +383,7 @@ init(mat4 projection)
 	// build the special objects not loaded by user
 	init_grid();
 	init_manips();	
+	init_light();
 
 	for( int i = 0; i < obj_data.size(); i++ )
 	{
