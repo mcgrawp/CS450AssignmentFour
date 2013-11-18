@@ -76,5 +76,11 @@
     <None Include="src\vshader.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="vPhongShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="fPhongShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
