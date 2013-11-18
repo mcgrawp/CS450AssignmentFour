@@ -18,3 +18,5 @@ void main()
 	Normal = normalize(NormalMatrix * VertexNormal);
 	Position = MVMatrix * VertexPosition;
 }
+
+// Shader as seen in Chapter 7: Light and Shadow of OpenGL Programming Guide Eighth Edition
