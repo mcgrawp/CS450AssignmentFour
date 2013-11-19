@@ -47,6 +47,9 @@ GLint gFlag = 0;
 GLuint gSelectFlagLoc;
 GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
 
+// number of shades to use for toon shader
+GLint gToonShadesN = 10;
+
 
 GLuint gProgram, gPhongProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
@@ -92,6 +95,8 @@ camera_mode gCurrentCameraMode = CAMERA_TRANSLATE;
 enum menu_val {
 	ITEM_RESET,
 	ITEM_NEW_OBJ,
+	ITEM_SWAP_SHADERS,
+	ITEM_TOON_SHADES_N,
 	ITEM_OBJ_TRANSLATION,
 	ITEM_OBJ_ROTATION,
 	ITEM_SCALE,
@@ -164,6 +169,25 @@ void menu(int num){
 			}
 		}
 		break;
+	case ITEM_SWAP_SHADERS:
+		printf("TODO: Swap between shaders here!\n");
+		/*
+			pseudocode:
+			gProgram = InitShader(...); // the other shaders
+			glUseProgram(gProgram);
+
+			rerun the rest of init // possibly parameterize init() to take shader locations
+			// this should reinit grid, manips, lighting, and all objects.
+		*/
+		break;
+	case ITEM_TOON_SHADES_N:
+		char buffer[256];
+		int n;
+		printf("Please enter the number of shades to use for the toon shader:\n");
+		cin.getline(buffer, 256);
+		n = atoi(buffer);
+		gToonShadesN = n;
+		break;
 	case ITEM_OBJ_TRANSLATION:
 		gCurrentObjMode = OBJ_TRANSLATE;
 		break;
@@ -196,6 +220,7 @@ void menu(int num){
 // building menus
 void build_menus(void) {
 	int menu_id;
+	int all_transforms_submenu_id;
 	int obj_submenu_id;
 	int camera_submenu_id;
 	int rot_submenu_id;
@@ -220,12 +245,17 @@ void build_menus(void) {
 	glutAddSubMenu("Rotation", rot_submenu_id);
 	glutAddMenuEntry("Translation", ITEM_CAMERA_TRANSLATION);
 	glutAddMenuEntry("Dolly", ITEM_DOLLY);
-	
-	menu_id = glutCreateMenu(menu);
+
+	all_transforms_submenu_id = glutCreateMenu(menu);
 	glutAddMenuEntry("Load .obj File", ITEM_NEW_OBJ);
+	glutAddMenuEntry("Reset All", ITEM_RESET);
 	glutAddSubMenu("Object Transformation", obj_submenu_id);
 	glutAddSubMenu("Camera Transformation", camera_submenu_id);
-	glutAddMenuEntry("Reset All", ITEM_RESET);
+	
+	menu_id = glutCreateMenu(menu);
+	glutAddMenuEntry("Swap shaders", ITEM_SWAP_SHADERS);
+	glutAddMenuEntry("Set toon shades", ITEM_TOON_SHADES_N);
+	glutAddSubMenu("Transformations", all_transforms_submenu_id);
  
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -367,11 +397,11 @@ void init_light( void )
 	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
 	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
 
-	glUniform1f(gConstantAttenuationLoc, 1, gSceneLight.constantAttenuation);
+	glUniform1f(gConstantAttenuationLoc, gSceneLight.constantAttenuation);
 
-	glUniform1f(gLinearAttenuationLoc, 1, gSceneLight.linearAttenuation);
+	glUniform1f(gLinearAttenuationLoc, gSceneLight.linearAttenuation);
 	
-	glUniform1f(gQuadraticAttenuationLoc, 1, gSceneLight.quadraticAttenuation);
+	glUniform1f(gQuadraticAttenuationLoc, gSceneLight.quadraticAttenuation);
 
 	glUseProgram(gProgram);
 }
@@ -386,7 +416,7 @@ init(mat4 projection)
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
     gProgram = InitShader("./src/vshader.glsl", "./src/fshader.glsl");
-	gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
+	//gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
     glUseProgram(gProgram);
 	gVertLoc = glGetAttribLocation(gProgram, "vPosition");
 	gNormLoc = glGetAttribLocation(gProgram, "vNormal");
@@ -574,13 +604,8 @@ mouse( int button, int state, int x, int y )
 	last_x = x;
 	last_y = y;
 
-	// ------------------------------- redrawing for selection
-
+	// redrawing for selection
 	draw(true);
-
-	// -------------------------------- end redrawing
-
-
 	glutPostRedisplay();  //MUST REMEMBER TO CALL POST REDISPLAY OR IT WON'T RENDER!
 
 	//Now check the pixel location to see what color is found!
@@ -618,14 +643,6 @@ mouse( int button, int state, int x, int y )
 			obj_data[i]->selected = false;
 		}
 	}
-
-	//printf("Picked  == %d\n", gPicked);
-	// uncomment below to see the color render
-	// Swap buffers makes the back buffer actually show...in this case, we don't want it to show so we comment out.
-	// For debugging, you can uncomment it to see the render of the back buffer which will hold your 'fake color render'
-
-	/*glutSwapBuffers();
-	cin.get();*/
 }
 
 //----------------------------------------------------------------------------
@@ -916,44 +933,45 @@ void myReshape2(int w, int h)
 
 int main(int argc, char** argv)
 {
-	string application_info = "CS450AssignmentThree";
+	string application_info = "CS450AssignmentFour";
 	string *window_title = new string;
 
-	string usage = "Usage:\nCS450AssignmentThree O LEFT RIGHT BOTTOM TOP NEAR FAR\nwhere LEFT RIGHT BOTTOM TOP NEAR and FAR are floating point values that specify the \
-orthographic view volume.\nor\nCS450AssignmentThree P FOV NEAR FAR\nwhere FOV is the field of view in degrees, and NEAR and FAR are floating point values that specify the view volume in perspective.\n";
+	string usage = "Usage:\nCS450AssignmentFour O LEFT RIGHT BOTTOM TOP NEAR FAR\nwhere LEFT RIGHT BOTTOM TOP NEAR and FAR are floating point values that specify the \
+orthographic view volume.\nor\nCS450AssignmentFour P FOV NEAR FAR\nwhere FOV is the field of view in degrees, and NEAR and FAR are floating point values that specify the view volume in perspective.\n";
 	bool bad_input = false;
+	mat4 projection;
 
 	if(argc < 5) {
 		bad_input = true;
 		cerr << "Not enough arguments.\n";
 	}
+	else {
+		bool o = false;
+		bool p = false;
+		o = !string("O").compare(argv[1]);
+		p = !string("P").compare(argv[1]);
 	
-	bool o = false;
-	bool p = false;
-	o = !string("O").compare(argv[1]);
-	p = !string("P").compare(argv[1]);
-	
-	if(!o && !p) {
-		bad_input = true;
-		cerr << "1st parameter was neither 'O' nor 'P'.\n";
-	}
-	else if(o && argc != 8 || p && argc != 5) {
-		bad_input = true;
-		cerr << "Wrong number of arguments for 'O' or 'P' viewing.\n";
-	}
+		if(!o && !p) {
+			bad_input = true;
+			cerr << "1st parameter was neither 'O' nor 'P'.\n";
+		}
+		else if(o && argc != 8 || p && argc != 5) {
+			bad_input = true;
+			cerr << "Wrong number of arguments for 'O' or 'P' viewing.\n";
+		}
 
-	for(int i = 0; i < argc; i++) {
-		argv_copy.push_back(string(argv[i]));
-	}
+		for(int i = 0; i < argc; i++) {
+			argv_copy.push_back(string(argv[i]));
+		}
 	
-	mat4 projection;
-	if(o) {
-		ortho = true;
-		projection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
-	}
-	else if(p) {
-		ortho = false;
-		projection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
+		if(o) {
+			ortho = true;
+			projection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
+		}
+		else if(p) {
+			ortho = false;
+			projection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
+		}
 	}
 
 	if(bad_input) {

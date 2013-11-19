@@ -32,10 +32,12 @@
     <ClCompile Include="src\SceneLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fPhongShader.glsl" />
+    <None Include="src\fPhongPointLightShader.glsl" />
+    <None Include="src\fPhongShader.glsl" />
     <None Include="src\fshader.glsl" />
+    <None Include="src\vPhongPointLightShader.glsl" />
+    <None Include="src\vPhongShader.glsl" />
     <None Include="src\vshader.glsl" />
-    <None Include="vPhongShader.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{44CDD105-9D58-41B8-9EF0-3924866DF065}</ProjectGuid>
