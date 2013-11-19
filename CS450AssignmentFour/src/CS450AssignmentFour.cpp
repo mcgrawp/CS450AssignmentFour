@@ -526,66 +526,18 @@ void
 draw(bool selection = false) {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	if(!selection) {
-		mat4 rot = grid.rotateX * grid.rotateY * grid.rotateZ;
-		gViewTransform = gCameraTranslate * (gCameraRotX * gCameraRotY * gCameraRotZ);
-		grid.model_view = gViewTransform * (grid.translateXYZ * (grid.scaleXYZ * rot));
-		glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, grid.model_view);
-		// draw ground grid
-		glBindVertexArray(grid.vao);
-		glDrawArrays(GL_LINES, 0, grid.data_soa.num_vertices);
-	}
+	mat4 rot = grid.rotateX * grid.rotateY * grid.rotateZ;
+	gViewTransform = gCameraTranslate * (gCameraRotX * gCameraRotY * gCameraRotZ);
+	grid.model_view = gViewTransform * (grid.translateXYZ * (grid.scaleXYZ * rot));
+	glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, grid.model_view);
+	// draw ground grid
+	glBindVertexArray(grid.vao);
+	glDrawArrays(GL_LINES, 0, grid.data_soa.num_vertices);
 
 	// draw user objects and manips
 	for( auto obj : obj_data )
 	{
 		//Normal render so set selection Flag to 0
-		gFlag = selection ? 1 : 0;
-		glUniform1i(gSelectFlagLoc, gFlag);
-		
-		if(obj->selected == true) {
-			// draw manipulators here
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			gFlag = 2;	// change flag to 2, for absolute coloring
-			glUniform1i(gSelectFlagLoc, gFlag);
-			for(int i = 0; i < 3; i++) {
-				// manips: should have 1 rotation ever. also always use their object's translate.
-				// and should use the gModelView as everything else does
-				mat4 rot_manip = manips[i].rotateX * manips[i].rotateY * manips[i].rotateZ;
-				mat4 transform = gViewTransform * obj->translateXYZ * rot_manip; // accumulation shenanigans
-				glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, transform);
-				
-
-				glBindVertexArray(manips[i].vao);
-				glDrawArrays(GL_TRIANGLES, 0, manips[i].data_soa.num_vertices);
-			}
-		
-			// back to normal rendering
-			gFlag = selection ? 1 : 0;
-			glUniform1i(gSelectFlagLoc, gFlag);
-
-			// wireframe
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glPolygonOffset(1.0, 2); //Try 1.0 and 2 for factor and units
-
-		}
-		else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-
-		if(selection) {
-			gSelectionColorR = obj->selectionR;
-			gSelectionColorG = obj->selectionG;
-			gSelectionColorB = obj->selectionB;
-			gSelectionColorA = obj->selectionA;
-
-			//sync with shader
-			glUniform1i(gSelectColorRLoc,gSelectionColorR);
-			glUniform1i(gSelectColorGLoc,gSelectionColorG);
-			glUniform1i(gSelectColorBLoc,gSelectionColorB);
-			glUniform1i(gSelectColorALoc,gSelectionColorA);
-		}
-
 		
 		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
 		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
