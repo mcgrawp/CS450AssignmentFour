@@ -82,5 +82,11 @@
     <None Include="fPhongShader.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="src\fPhongPointLightShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\vPhongPointLightShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -7,7 +7,6 @@ uniform float Strength;
 
 in vec4 Color;
 in vec3 Normal;
-
 in vec3 LightDirection;
 in vec3 HalfVector;
 in float Attenuation;

@@ -47,20 +47,29 @@ GLint gFlag = 0;
 GLuint gSelectFlagLoc;
 GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
 
-
-GLuint gProgram, gPhongProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
 
-GLint gNormalMatrixLoc;
+GLuint gProgram, gPhongProgram;
+
+// camera transforms
+mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
+mat4 gProjection;
+// phong shader vars
+GLint gMVPMatrixLoc, gMVMatrixLoc;
+GLint gAmbientLoc;
+GLint gLightColorLoc;
+GLint gShininessLoc;
+GLint gStrengthLoc;
+GLint gVertexColorLoc;
+GLint gVertexNormalLoc;
+GLint gVertexPositionLoc;
+
+
 GLint gLightPositionLoc;
 GLint gEyeDirectionLoc;
 GLint gConstantAttenuationLoc;
 GLint gLinearAttenuationLoc;
 GLint gQuadraticAttenuationLoc;
-
-// camera transforms
-mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
-
 // which manipulator is being dragged
 enum manip {
 	NO_MANIP_HELD,
@@ -345,8 +354,17 @@ struct LightProperties {
 		float quadraticAttenuation;
 } gSceneLight;
 
+mat4 gNormalmatrix = Angel::identity();
+vec3 gLightPosition(0., 1., 0.);
+vec3 gEyeDirection(0., 0., -1.);
+GLfloat gConstantAttenuation = 1.;
+GLfloat gLinearAttenuation = 1.;
+GLfloat gQuadraticAttenuation = 1.;
+
 void init_light( void )
 {
+	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
+
 	gSceneLight.ambient = vec3(1., 0., 0.);
 	gSceneLight.color = vec3(1., 0., 0.);
 	gSceneLight.position = vec3(0., 0., 0.);
@@ -355,29 +373,48 @@ void init_light( void )
 	gSceneLight.quadraticAttenuation = 1.;
 
 	glUseProgram(gPhongProgram);
-	gNormalMatrixLoc = glGetAttribLocation(gProgram, "NormalMatrix");
-	gLightPositionLoc = glGetAttribLocation(gProgram, "LightPosition");
-	gEyeDirectionLoc = glGetAttribLocation(gProgram, "EyeDirection");
-	gConstantAttenuationLoc = glGetAttribLocation(gProgram, "ConstantAttenuation");
-	gLinearAttenuationLoc = glGetAttribLocation(gProgram, "LinearAttenuation");
-	gQuadraticAttenuationLoc = glGetAttribLocation(gProgram, "QuadraticAttenuation");
+
 	
-	glUniform3fv(gLightPositionLoc, 1, gSceneLight.ambient);
+	// Vertex shader uniforms
+	gMVPMatrixLoc = glGetAttribLocation(gPhongProgram, "MVPMatrix");
+	gMVMatrixLoc = glGetAttribLocation(gPhongProgram, "MVMatrix");
+	gLightPositionLoc = glGetAttribLocation(gPhongProgram, "LightPosition");
+	gEyeDirectionLoc = glGetAttribLocation(gPhongProgram, "EyeDirection");
+
+	gConstantAttenuationLoc = glGetAttribLocation(gPhongProgram, "ConstantAttenuation");
+	gLinearAttenuationLoc = glGetAttribLocation(gPhongProgram, "LinearAttenuation");
+	gQuadraticAttenuationLoc = glGetAttribLocation(gPhongProgram, "QuadraticAttenuation");
+
+	gVertexColorLoc = glGetAttribLocation(gPhongProgram, "VertexColor");
+	gVertexNormalLoc = glGetAttribLocation(gPhongProgram, "VertexNormal");
+	gVertexPositionLoc = glGetAttribLocation(gPhongProgram, "VertexPosition");
+
+	// Fragment shader uniforms
+	gAmbientLoc = glGetAttribLocation(gPhongProgram, "Ambient");
+	gLightColorLoc = glGetAttribLocation(gPhongProgram, "LightColor");
+	gShininessLoc = glGetAttribLocation(gPhongProgram, "Shininess");
+	gStrengthLoc = glGetAttribLocation(gPhongProgram, "Strength");
+
+    glUniformMatrix4fv(gMVPMatrixLoc, 1, GL_TRUE, gProjection);
+    glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, gViewTransform);
 	
-	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
+	glUniform3fv(gLightPositionLoc, 1, gSceneLight.position);
 	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
 
-	glUniform1f(gConstantAttenuationLoc, 1, gSceneLight.constantAttenuation);
+	glUniform1f(gConstantAttenuationLoc, gConstantAttenuation);
+	glUniform1f(gLinearAttenuation, gLinearAttenuation);
+	glUniform1f(gQuadraticAttenuationLoc, gQuadraticAttenuation);
 
-	glUniform1f(gLinearAttenuationLoc, 1, gSceneLight.linearAttenuation);
-	
-	glUniform1f(gQuadraticAttenuationLoc, 1, gSceneLight.quadraticAttenuation);
+	glUniform3fv(gAmbientLoc, 1, gSceneLight.ambient);
+	glUniform3fv(gLightColorLoc, 1, gSceneLight.color);
+	glUniform1f(gShininessLoc, 10.);
+	glUniform1f(gStrengthLoc, 10.);
 
 	glUseProgram(gProgram);
 }
 // OpenGL initialization
 void
-init(mat4 projection)
+init( void )
 {
     gCameraRotX = Angel::identity();
 	gCameraRotY = Angel::identity();
@@ -478,7 +515,7 @@ init(mat4 projection)
 	}
 
     glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, gViewTransform);
-    glUniformMatrix4fv(gProjectionLoc, 1, GL_TRUE, projection);
+    glUniformMatrix4fv(gProjectionLoc, 1, GL_TRUE, gProjection);
 
 
     glEnable(GL_DEPTH_TEST);
@@ -553,9 +590,16 @@ draw(bool selection = false) {
 		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
 		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
 		glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, obj->model_view);
-		mat3 mv_inverse;
-		mat3 norm_matrix = Angel::transpose(mv_inverse);
-		glUniformMatrix3fv(gNormalMatrixLoc, 1, GL_TRUE, norm_matrix);
+		
+		glUseProgram(gPhongProgram);
+		
+		glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, obj->model_view);
+		
+		gEyeDirection = vec3(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
+		glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
+		
+		glUseProgram(gProgram);
+
 		glBindVertexArray(obj->vao);
 		glDrawArrays(GL_TRIANGLES, 0, obj->data_soa.num_vertices);
 	}
@@ -946,14 +990,13 @@ orthographic view volume.\nor\nCS450AssignmentThree P FOV NEAR FAR\nwhere FOV is
 		argv_copy.push_back(string(argv[i]));
 	}
 	
-	mat4 projection;
 	if(o) {
 		ortho = true;
-		projection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
+		gProjection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
 	}
 	else if(p) {
 		ortho = false;
-		projection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
+		gProjection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
 	}
 
 	if(bad_input) {
@@ -983,7 +1026,7 @@ orthographic view volume.\nor\nCS450AssignmentThree P FOV NEAR FAR\nwhere FOV is
     glewInit();
 #endif
 
-	init(projection);
+	init();
 
     //NOTE:  callbacks must go after window is created!!!
 	glutReshapeFunc(myReshape2);

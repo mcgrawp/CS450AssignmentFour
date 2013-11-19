@@ -33,7 +33,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fPhongShader.glsl" />
+    <None Include="src\fPhongPointLightShader.glsl" />
     <None Include="src\fshader.glsl" />
+    <None Include="src\vPhongPointLightShader.glsl" />
     <None Include="src\vshader.glsl" />
     <None Include="vPhongShader.glsl" />
   </ItemGroup>
