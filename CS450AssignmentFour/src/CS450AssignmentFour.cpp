@@ -105,23 +105,6 @@ enum menu_val {
 	ITEM_DOLLY
 };
 
-struct LightProperties {
-		bool isEnabled;
-		bool isLocal;
-		bool isSpot;
-		vec3 ambient;
-		vec3 color;
-		vec3 position;
-		vec3 halfVector;
-		vec3 coneDirection;
-		float spotCosCutoff;
-		float spotExponent;
-		float constantAttenuation;
-		float linearAttenuation;
-		float quadraticAttenuation;
-};
-
-vector<LightProperties> gLights;
 
 // does all vao/vbo setup for obj_data[i]
 void
@@ -353,8 +336,24 @@ init_manips(void) {
 
 }
 
+struct LightProperties {
+		vec3 ambient;
+		vec3 color;
+		vec3 position;
+		float constantAttenuation;
+		float linearAttenuation;
+		float quadraticAttenuation;
+} gSceneLight;
+
 void init_light( void )
 {
+	gSceneLight.ambient = vec3(1., 0., 0.);
+	gSceneLight.color = vec3(1., 0., 0.);
+	gSceneLight.position = vec3(0., 0., 0.);
+	gSceneLight.constantAttenuation = 1.;
+	gSceneLight.linearAttenuation = 1.;
+	gSceneLight.quadraticAttenuation = 1.;
+
 	glUseProgram(gPhongProgram);
 	gNormalMatrixLoc = glGetAttribLocation(gProgram, "NormalMatrix");
 	gLightPositionLoc = glGetAttribLocation(gProgram, "LightPosition");
@@ -362,6 +361,19 @@ void init_light( void )
 	gConstantAttenuationLoc = glGetAttribLocation(gProgram, "ConstantAttenuation");
 	gLinearAttenuationLoc = glGetAttribLocation(gProgram, "LinearAttenuation");
 	gQuadraticAttenuationLoc = glGetAttribLocation(gProgram, "QuadraticAttenuation");
+	
+	glUniform3fv(gLightPositionLoc, 1, gSceneLight.ambient);
+	
+	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
+	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
+
+	glUniform1f(gConstantAttenuationLoc, 1, gSceneLight.constantAttenuation);
+
+	glUniform1f(gLinearAttenuationLoc, 1, gSceneLight.linearAttenuation);
+	
+	glUniform1f(gQuadraticAttenuationLoc, 1, gSceneLight.quadraticAttenuation);
+
+	glUseProgram(gProgram);
 }
 // OpenGL initialization
 void
@@ -541,7 +553,9 @@ draw(bool selection = false) {
 		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
 		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
 		glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, obj->model_view);
-
+		mat3 mv_inverse;
+		mat3 norm_matrix = Angel::transpose(mv_inverse);
+		glUniformMatrix3fv(gNormalMatrixLoc, 1, GL_TRUE, norm_matrix);
 		glBindVertexArray(obj->vao);
 		glDrawArrays(GL_TRIANGLES, 0, obj->data_soa.num_vertices);
 	}

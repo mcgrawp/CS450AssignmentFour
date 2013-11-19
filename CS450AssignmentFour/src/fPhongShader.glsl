@@ -4,8 +4,6 @@ struct LightProperties {
 		vec3 ambient;
 		vec3 color;
 		vec3 position;
-		float spotCosCutoff;
-		float spotExponent;
 		float constantAttenuation;
 		float linearAttenuation;
 		float quadraticAttenuation;
