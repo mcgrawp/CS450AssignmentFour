@@ -111,10 +111,7 @@ setup_obj(int i) {
 // menu callback
 void menu(int num){
 	switch(num) {
-	case ITEM_RESET:
-		obj_data.clear();
-		// TODO issue #7: Padraic reset camera here
-		break;
+	
 	case ITEM_NEW_OBJ:
 		{
 			char buffer[256];
@@ -216,7 +213,7 @@ init( void )
 	gCameraTranslate = Angel::identity();
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
-	gProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
+	gProgram = InitShader("./src/vDirectionalLightShader.glsl", "./src/fDirectionalLightShader.glsl");
 	glUseProgram(gProgram);
 
 	gVertexPositionLoc = glGetAttribLocation(gProgram, "VertexPosition");
@@ -237,9 +234,6 @@ init( void )
 
     gViewTransform = LookAt( eye, at, up );
 	gMVMatrix = gViewTransform * Angel::identity();
-	manips[0].model_view = gViewTransform;
-	manips[1].model_view = gViewTransform;
-	manips[2].model_view = gViewTransform;
 	
     glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, gMVMatrix);
     glUniformMatrix4fv(gMVPMatrixLoc, 1, GL_TRUE, gProjection);
@@ -251,36 +245,9 @@ init( void )
 void
 draw(bool selection = false) {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	mat4 rot = grid.rotateX * grid.rotateY * grid.rotateZ;
-	gViewTransform = gCameraTranslate * (gCameraRotX * gCameraRotY * gCameraRotZ);
-	grid.model_view = gViewTransform * (grid.translateXYZ * (grid.scaleXYZ * rot));
-	glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, grid.model_view);
-	// draw ground grid
-	glBindVertexArray(grid.vao);
-	glDrawArrays(GL_LINES, 0, grid.data_soa.num_vertices);
-
-	// draw user objects and manips
-	for( auto obj : obj_data )
-	{
-		//Normal render so set selection Flag to 0
-		
-		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
-		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
-		glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, obj->model_view);
-		
-		glUseProgram(gProgram);
-		
-		glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, obj->model_view);
-		
-		gEyeDirection = vec3(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
-		glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
-		
-		glUseProgram(gProgram);
-
-		glBindVertexArray(obj->vao);
-		glDrawArrays(GL_TRIANGLES, 0, obj->data_soa.num_vertices);
-	}
+	
+	glBindVertexArray(obj->vao);
+	glDrawArrays(GL_TRIANGLES, 0, obj->data_soa.num_vertices);
 }
 
 //----------------------------------------------------------------------------
