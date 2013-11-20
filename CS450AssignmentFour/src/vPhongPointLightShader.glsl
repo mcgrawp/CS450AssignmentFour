@@ -10,14 +10,6 @@ uniform float ConstantAttenuation;
 uniform float LinearAttenuation;
 uniform float QuadraticAttenuation;
 
-// params for selection
-// flag: 0 == normal, 1 == selection, 2 == absolute coloring (manipulators)
-uniform int flag;
-uniform int selectionColorR;
-uniform int selectionColorG;
-uniform int selectionColorB;
-uniform int selectionColorA;
-
 in vec4 VertexColor;
 in vec3 VertexNormal;
 in vec4 VertexPosition;

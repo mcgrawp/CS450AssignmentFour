@@ -73,19 +73,19 @@
     <None Include="src\fshader.glsl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="src\vshader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="vPhongShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="fPhongShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="src\fPhongPointLightShader.glsl">
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\vPhongPointLightShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\fPhongShader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="fAmbient.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vDirectionLight.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

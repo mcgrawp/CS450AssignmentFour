@@ -22,54 +22,20 @@ using namespace std;
 // globals
 const string DATA_DIRECTORY_PATH = "./Data/";
 
-// special objects
-Obj grid;
-Obj manips[3];
-
-// all loaded objects
-vector<Obj*> obj_data;
-
 typedef Angel::vec4  color4;
 typedef Angel::vec4  point4;
 
 
 // global variables
-GLuint  gModelViewLoc;  // model-view matrix uniform shader variable location
-GLuint  gProjectionLoc; // projection matrix uniform shader variable location
+GLuint  gMVMatrixLoc;  // model-view matrix uniform shader variable location
+GLuint  gMVPMatrixLoc; // projection matrix uniform shader variable location
 
-mat4  gViewTransform;
-mat4 gModelView;
-// copied from example
-//Selection variables
-GLuint gSelectionColorR, gSelectionColorG, gSelectionColorB, gSelectionColorA;
-int gPicked = -1;
-GLint gFlag = 0;
-GLuint gSelectFlagLoc;
-GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
-
-GLint gVertLoc, gNormLoc, gColorLoc;
-
-GLuint gProgram, gPhongProgram;
+GLuint gProgram;
 
 // camera transforms
 mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
 mat4 gProjection;
-// phong shader vars
-GLint gMVPMatrixLoc, gMVMatrixLoc;
-GLint gAmbientLoc;
-GLint gLightColorLoc;
-GLint gShininessLoc;
-GLint gStrengthLoc;
-GLint gVertexColorLoc;
-GLint gVertexNormalLoc;
-GLint gVertexPositionLoc;
 
-
-GLint gLightPositionLoc;
-GLint gEyeDirectionLoc;
-GLint gConstantAttenuationLoc;
-GLint gLinearAttenuationLoc;
-GLint gQuadraticAttenuationLoc;
 // which manipulator is being dragged
 enum manip {
 	NO_MANIP_HELD,
@@ -125,11 +91,6 @@ setup_obj(int i) {
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 
-	// set up colors for selection
-	obj_data[i]->selectionR = i;
-	obj_data[i]->selectionG = i;
-	obj_data[i]->selectionB = i;
-	obj_data[i]->selectionA = 255; // only seems to work at 255
 	obj_data[i]->model_view = gViewTransform;
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	GLsizei num_bytes_vert_data = sizeof(GLfloat) * obj_data[i]->data_soa.positions.size();
@@ -141,10 +102,10 @@ setup_obj(int i) {
 	glBufferSubData(GL_ARRAY_BUFFER, num_bytes_vert_data, num_bytes_norm_data, norm_data);
 		
 	
-	glEnableVertexAttribArray(gVertLoc);
-	glVertexAttribPointer(gVertLoc, obj_data[i]->data_soa.positions_stride, GL_FLOAT, GL_FALSE, 0, (GLvoid *) 0);
-	glEnableVertexAttribArray(gNormLoc);
-	glVertexAttribPointer(gNormLoc, obj_data[i]->data_soa.normals_stride, GL_FLOAT, GL_FALSE, 0, (GLvoid *) num_bytes_vert_data);
+	glEnableVertexAttribArray(gVertexPositionLoc);
+	glVertexAttribPointer(gVertexPositionLoc, obj_data[i]->data_soa.positions_stride, GL_FLOAT, GL_FALSE, 0, (GLvoid *) 0);
+	glEnableVertexAttribArray(gVertexNormalLoc);
+	glVertexAttribPointer(gVertexNormalLoc, obj_data[i]->data_soa.normals_stride, GL_FLOAT, GL_FALSE, 0, (GLvoid *) num_bytes_vert_data);
 }
 
 // menu callback
@@ -239,178 +200,11 @@ void build_menus(void) {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
-void
-init_grid(void) {
-	// load in vertices for lines
-	grid.data_soa.positions_stride = 3;
-	for(int i = -10; i < 10; i++) {
-		// line on x = i
-		grid.data_soa.positions.push_back(i);
-		grid.data_soa.positions.push_back(0);
-		grid.data_soa.positions.push_back(-10);
-
-		grid.data_soa.positions.push_back(i);
-		grid.data_soa.positions.push_back(0);
-		grid.data_soa.positions.push_back(10);
-
-		// line on y = i
-		grid.data_soa.positions.push_back(-10);
-		grid.data_soa.positions.push_back(0);
-		grid.data_soa.positions.push_back(i);
-
-		grid.data_soa.positions.push_back(10);
-		grid.data_soa.positions.push_back(0);
-		grid.data_soa.positions.push_back(i);
-	}
-	grid.data_soa.num_vertices = grid.data_soa.positions.size() / grid.data_soa.positions_stride;
-
-	// setup vao and two vbos for manipulators
-	glGenVertexArrays(1, &grid.vao);
-	glBindVertexArray(grid.vao);
-	GLuint grid_buffer[2]; // 0 is vertices, 1 is colors
-	glGenBuffers(2, grid_buffer);
-
-	grid.data_soa.colors_stride = 4;
-	for(int j = 0; j < grid.data_soa.num_vertices; j++) {
-		grid.data_soa.colors.push_back(0.0);
-		grid.data_soa.colors.push_back(0.0);
-		grid.data_soa.colors.push_back(0.0);
-		grid.data_soa.colors.push_back(1.0);
-	}
-		
-		
-	// vertices
-	glBindBuffer(GL_ARRAY_BUFFER, grid_buffer[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * grid.data_soa.positions.size(), grid.data_soa.positions.data(), GL_STATIC_DRAW);
-	// colors
-	glBindBuffer(GL_ARRAY_BUFFER, grid_buffer[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * grid.data_soa.colors.size(), grid.data_soa.colors.data(), GL_STATIC_DRAW);
-
-	// color added to shader. only displays with flag == 2
-	glBindBuffer(GL_ARRAY_BUFFER, grid_buffer[0]);
-	glEnableVertexAttribArray(gVertLoc);
-	glVertexAttribPointer(gVertLoc, grid.data_soa.positions_stride, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-
-	glBindBuffer(GL_ARRAY_BUFFER, grid_buffer[1]);
-	glEnableVertexAttribArray(gColorLoc);
-	glVertexAttribPointer(gColorLoc, grid.data_soa.colors_stride, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-}
-
-void
-init_manips(void) {
-	for(int i = 0; i < 3; i++) {
-		manips[i] = Obj(DATA_DIRECTORY_PATH + "axis.obj");
-
-		
-		// setup vao and two vbos for manipulators
-		glGenVertexArrays(1, &manips[i].vao);
-		glBindVertexArray(manips[i].vao);
-		GLuint manips_buffer[2]; // 0 is vertices, 1 is colors
-		glGenBuffers(2, manips_buffer);
-
-		manips[i].data_soa.colors_stride = 4;
-		for(int j = 0; j < manips[i].data_soa.num_vertices; j++) {
-			manips[i].data_soa.colors.push_back(i == 0 ? 1.0 : 0.0);
-			manips[i].data_soa.colors.push_back(i == 1 ? 1.0 : 0.0);
-			manips[i].data_soa.colors.push_back(i == 2 ? 1.0 : 0.0);
-			manips[i].data_soa.colors.push_back(1.0);
-		}
-		
-		
-		// vertices
-		glBindBuffer(GL_ARRAY_BUFFER, manips_buffer[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * manips[i].data_soa.positions.size(), manips[i].data_soa.positions.data(), GL_STATIC_DRAW);
-		// colors
-		glBindBuffer(GL_ARRAY_BUFFER, manips_buffer[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * manips[i].data_soa.colors.size(), manips[i].data_soa.colors.data(), GL_STATIC_DRAW);
-
-		// color added to shader. only displays with flag == 2
-		glBindBuffer(GL_ARRAY_BUFFER, manips_buffer[0]);
-		glEnableVertexAttribArray(gVertLoc);
-		glVertexAttribPointer(gVertLoc, manips[i].data_soa.positions_stride, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-
-		glBindBuffer(GL_ARRAY_BUFFER, manips_buffer[1]);
-		glEnableVertexAttribArray(gColorLoc);
-		glVertexAttribPointer(gColorLoc, manips[i].data_soa.colors_stride, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	}
-	
-	// all manips start pointing +y
-	// idx 0 needs to point +x
-	// rotate about z +90
-	manips[0].rotateZ = Angel::RotateZ(-90.0f);
-
-	// idx 2 needs to point +z
-	// rotate about x
-	manips[2].rotateX = Angel::RotateX(90.0f);
-
-}
-
-struct LightProperties {
-		vec3 ambient;
-		vec3 color;
-		vec3 position;
-		float constantAttenuation;
-		float linearAttenuation;
-		float quadraticAttenuation;
-} gSceneLight;
-
-mat4 gNormalmatrix = Angel::identity();
-vec3 gLightPosition(0., 1., 0.);
-vec3 gEyeDirection(0., 0., -1.);
-GLfloat gConstantAttenuation = 1.;
-GLfloat gLinearAttenuation = 1.;
-GLfloat gQuadraticAttenuation = 1.;
-
 void init_light( void )
 {
-	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
-
-	gSceneLight.ambient = vec3(1., 0., 0.);
-	gSceneLight.color = vec3(1., 0., 0.);
-	gSceneLight.position = vec3(0., 0., 0.);
-	gSceneLight.constantAttenuation = 1.;
-	gSceneLight.linearAttenuation = 1.;
-	gSceneLight.quadraticAttenuation = 1.;
-
-	glUseProgram(gPhongProgram);
-
-	
 	// Vertex shader uniforms
-	gMVPMatrixLoc = glGetAttribLocation(gPhongProgram, "MVPMatrix");
-	gMVMatrixLoc = glGetAttribLocation(gPhongProgram, "MVMatrix");
-	gLightPositionLoc = glGetAttribLocation(gPhongProgram, "LightPosition");
-	gEyeDirectionLoc = glGetAttribLocation(gPhongProgram, "EyeDirection");
-
-	gConstantAttenuationLoc = glGetAttribLocation(gPhongProgram, "ConstantAttenuation");
-	gLinearAttenuationLoc = glGetAttribLocation(gPhongProgram, "LinearAttenuation");
-	gQuadraticAttenuationLoc = glGetAttribLocation(gPhongProgram, "QuadraticAttenuation");
-
-	gVertexColorLoc = glGetAttribLocation(gPhongProgram, "VertexColor");
-	gVertexNormalLoc = glGetAttribLocation(gPhongProgram, "VertexNormal");
-	gVertexPositionLoc = glGetAttribLocation(gPhongProgram, "VertexPosition");
 
 	// Fragment shader uniforms
-	gAmbientLoc = glGetAttribLocation(gPhongProgram, "Ambient");
-	gLightColorLoc = glGetAttribLocation(gPhongProgram, "LightColor");
-	gShininessLoc = glGetAttribLocation(gPhongProgram, "Shininess");
-	gStrengthLoc = glGetAttribLocation(gPhongProgram, "Strength");
-
-    glUniformMatrix4fv(gMVPMatrixLoc, 1, GL_TRUE, gProjection);
-    glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, gViewTransform);
-	
-	glUniform3fv(gLightPositionLoc, 1, gSceneLight.position);
-	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
-
-	glUniform1f(gConstantAttenuationLoc, gConstantAttenuation);
-	glUniform1f(gLinearAttenuation, gLinearAttenuation);
-	glUniform1f(gQuadraticAttenuationLoc, gQuadraticAttenuation);
-
-	glUniform3fv(gAmbientLoc, 1, gSceneLight.ambient);
-	glUniform3fv(gLightColorLoc, 1, gSceneLight.color);
-	glUniform1f(gShininessLoc, 10.);
-	glUniform1f(gStrengthLoc, 10.);
-
-	glUseProgram(gProgram);
 }
 // OpenGL initialization
 void
@@ -422,101 +216,33 @@ init( void )
 	gCameraTranslate = Angel::identity();
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
-    gProgram = InitShader("./src/vshader.glsl", "./src/fshader.glsl");
-	gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
-    glUseProgram(gProgram);
-	gVertLoc = glGetAttribLocation(gProgram, "vPosition");
-	gNormLoc = glGetAttribLocation(gProgram, "vNormal");
-	gColorLoc = glGetAttribLocation(gProgram, "vColor");
+	gProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
+	glUseProgram(gProgram);
+
+	gVertexPositionLoc = glGetAttribLocation(gProgram, "VertexPosition");
+	gVertexNormalLoc = glGetAttribLocation(gProgram, "VertexNormal");
+	gVertexColorLoc = glGetAttribLocation(gProgram, "VertexColor");
 
 	// build the special objects not loaded by user
-	init_grid();
-	init_manips();	
 	init_light();
 
-	for( int i = 0; i < obj_data.size(); i++ )
-	{
-		// for some reason only part of this loop can be put into a function. WTF
-		setup_obj(i);
-	}
-
-	
-	int linked;
-	glGetProgramiv(gProgram, GL_LINK_STATUS, &linked);
-	if( linked != GL_TRUE )
-	{
-		int maxLength;
-		glGetProgramiv(gProgram, GL_INFO_LOG_LENGTH, &maxLength);
-		maxLength = maxLength + 1;
-		GLchar *pLinkInfoLog = new GLchar[maxLength];
-		glGetProgramInfoLog(gProgram, maxLength, &maxLength, pLinkInfoLog);
-		cerr << *pLinkInfoLog << endl;
-	}
-
-    // Initialize shader lighting parameters
-    // RAM: No need to change these...we'll learn about the details when we
-    // cover Illumination and Shading
-    point4 light_position(0., 1.25, 1., 1.0);
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-    color4 light_specular(1.0, 1.0, 1.0, 1.0);
-
-    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    color4 material_specular(1.0, 0.8, 0.0, 1.0);
-    float  material_shininess = 100.0;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
-    glUniform4fv( glGetUniformLocation(gProgram, "AmbientProduct"),
-		  1, ambient_product );
-    glUniform4fv( glGetUniformLocation(gProgram, "DiffuseProduct"),
-		  1, diffuse_product );
-    glUniform4fv( glGetUniformLocation(gProgram, "SpecularProduct"),
-		  1, specular_product );
-
-    glUniform4fv( glGetUniformLocation(gProgram, "LightPosition"),
-		  1, light_position );
-
-    glUniform1f( glGetUniformLocation(gProgram, "Shininess"),
-		 material_shininess );
-
-	
-	//Set up selection colors and a gFlag -- copied from example
-	gSelectColorRLoc = glGetUniformLocation(gProgram,"selectionColorR");
-	gSelectColorGLoc = glGetUniformLocation(gProgram,"selectionColorG");
-	gSelectColorBLoc = glGetUniformLocation(gProgram,"selectionColorB");
-	gSelectColorALoc = glGetUniformLocation(gProgram,"selectionColorA");
-	glUniform1i(gSelectColorRLoc, gSelectionColorR);
-	glUniform1i(gSelectColorGLoc, gSelectionColorG);
-	glUniform1i(gSelectColorBLoc, gSelectionColorB);
-	glUniform1i(gSelectColorALoc, gSelectionColorA);
-
-	gSelectFlagLoc = glGetUniformLocation(gProgram, "flag");
-	glUniform1i(gSelectFlagLoc, gFlag);
-
-
-    gModelViewLoc = glGetUniformLocation(gProgram, "ModelView");
-    gProjectionLoc = glGetUniformLocation(gProgram, "Projection");
+    gMVMatrixLoc = glGetUniformLocation(gProgram, "MVMatrix");
+    gMVPMatrixLoc = glGetUniformLocation(gProgram, "MVPMatrix");
 
     point4  eye(0., 0., 1., 1.);
     point4  at(0., 0., 0., 1.);
     vec4    up(0., 1., 0., 0.);
 	gCameraTranslate = Translate(-eye);
+	gEyeDirection = vec3(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
+
     gViewTransform = LookAt( eye, at, up );
-	gModelView = gViewTransform * Angel::identity();
+	gMVMatrix = gViewTransform * Angel::identity();
 	manips[0].model_view = gViewTransform;
 	manips[1].model_view = gViewTransform;
 	manips[2].model_view = gViewTransform;
-	for(auto obj : obj_data) {
-		obj->model_view = gViewTransform;
-	}
-
-    glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, gViewTransform);
-    glUniformMatrix4fv(gProjectionLoc, 1, GL_TRUE, gProjection);
-
+	
+    glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, gMVMatrix);
+    glUniformMatrix4fv(gMVPMatrixLoc, 1, GL_TRUE, gProjection);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -529,7 +255,7 @@ draw(bool selection = false) {
 	mat4 rot = grid.rotateX * grid.rotateY * grid.rotateZ;
 	gViewTransform = gCameraTranslate * (gCameraRotX * gCameraRotY * gCameraRotZ);
 	grid.model_view = gViewTransform * (grid.translateXYZ * (grid.scaleXYZ * rot));
-	glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, grid.model_view);
+	glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, grid.model_view);
 	// draw ground grid
 	glBindVertexArray(grid.vao);
 	glDrawArrays(GL_LINES, 0, grid.data_soa.num_vertices);
@@ -541,9 +267,9 @@ draw(bool selection = false) {
 		
 		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
 		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
-		glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, obj->model_view);
+		glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, obj->model_view);
 		
-		glUseProgram(gPhongProgram);
+		glUseProgram(gProgram);
 		
 		glUniformMatrix4fv(gMVMatrixLoc, 1, GL_TRUE, obj->model_view);
 		
