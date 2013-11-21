@@ -49,6 +49,8 @@ GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
 
 // number of shades to use for toon shader
 GLint gToonShadesN = 10;
+bool gUseToon = false;
+mat4 gInitProjection;
 
 
 GLuint gProgram;
@@ -107,6 +109,9 @@ enum menu_val {
 	ITEM_CAMERA_TRANSLATION_Z,
 	ITEM_DOLLY
 };
+
+// function prototypes
+void init(mat4 projection);
 
 
 // does all vao/vbo setup for obj_data[i]
@@ -168,15 +173,8 @@ void menu(int num){
 		}
 		break;
 	case ITEM_SWAP_SHADERS:
-		printf("TODO: Swap between shaders here!\n");
-		/*
-			pseudocode:
-			gProgram = InitShader(...); // the other shaders
-			glUseProgram(gProgram);
-
-			rerun the rest of init // possibly parameterize init() to take shader locations
-			// this should reinit grid, manips, lighting, and all objects.
-		*/
+		gUseToon = !gUseToon;
+		init(gInitProjection);
 		break;
 	case ITEM_TOON_SHADES_N:
 		char buffer[256];
@@ -402,10 +400,17 @@ init(mat4 projection)
 	gCameraRotY = Angel::identity();
 	gCameraRotZ = Angel::identity();
 	gCameraTranslate = Angel::identity();
+	
 	// Load shaders and use the resulting shader program
-	// doing this ahead of time so we can use it for setup of special objects
-    gProgram = InitShader( "./src/vDirectionalLight.glsl", "./src/fDirectionalLight.glsl" );
-    glUseProgram(gProgram);
+	// Check which shader we're to use now
+	if(gUseToon) {
+		gProgram = InitShader( "./src/vToon.glsl", "./src/fToon.glsl" );
+	}
+	else {
+		gProgram = InitShader( "./src/vDirectionalLight.glsl", "./src/fDirectionalLight.glsl" );
+	}
+	
+	glUseProgram(gProgram);
 	gVertLoc = glGetAttribLocation(gProgram, "VertexPosition");
 	gNormLoc = glGetAttribLocation(gProgram, "VertexNormal");
 	gColorLoc = glGetAttribLocation(gProgram, "VertexColor");
@@ -611,6 +616,7 @@ display( void )
 	draw();
     glutSwapBuffers();
 }
+
 vec4 camera_vec;
 //----------------------------------------------------------------------------
 void
@@ -897,7 +903,6 @@ int main(int argc, char** argv)
 	string usage = "Usage:\nCS450AssignmentFour O LEFT RIGHT BOTTOM TOP NEAR FAR\nwhere LEFT RIGHT BOTTOM TOP NEAR and FAR are floating point values that specify the \
 orthographic view volume.\nor\nCS450AssignmentFour P FOV NEAR FAR\nwhere FOV is the field of view in degrees, and NEAR and FAR are floating point values that specify the view volume in perspective.\n";
 	bool bad_input = false;
-	mat4 projection;
 
 	if(argc < 5) {
 		bad_input = true;
@@ -924,11 +929,11 @@ orthographic view volume.\nor\nCS450AssignmentFour P FOV NEAR FAR\nwhere FOV is 
 	
 		if(o) {
 			ortho = true;
-			projection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
+			gInitProjection = Ortho(atof(argv_copy[2].c_str()), atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()), atof(argv_copy[5].c_str()), atof(argv_copy[6].c_str()), atof(argv_copy[7].c_str()));
 		}
 		else if(p) {
 			ortho = false;
-			projection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
+			gInitProjection = Perspective(atof(argv_copy[2].c_str()), 1.0f, atof(argv_copy[3].c_str()), atof(argv_copy[4].c_str()));
 		}
 	}
 
@@ -959,7 +964,7 @@ orthographic view volume.\nor\nCS450AssignmentFour P FOV NEAR FAR\nwhere FOV is 
     glewInit();
 #endif
 	obj_data.push_back(new Obj("./Data/bunnyS.obj"));
-	init(projection);
+	init(gInitProjection);
 
     //NOTE:  callbacks must go after window is created!!!
 	glutReshapeFunc(myReshape2);

@@ -27,7 +27,9 @@ void main()
 	gl_Position = Projection * ModelView * VertexPosition;
 
 	if(flag == 0) {
-		Color = vec4(Normal, 1.);
+		//Color = vec4(Normal, 1.);
+		// make a silly change from vDirectionalLight so we can see the difference in shaders
+		Color = vec4(Normal.z, Normal.x, Normal.y, 1.);
 	} 
 	else if(flag == 1) {
 		Color.r = float(selectionColorR)/float(255);

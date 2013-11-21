@@ -76,5 +76,11 @@
     <None Include="src\vDirectionalLight.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="src\vToon.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\fToon.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

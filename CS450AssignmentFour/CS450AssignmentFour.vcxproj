@@ -33,7 +33,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\fDirectionalLight.glsl" />
+    <None Include="src\fToon.glsl" />
     <None Include="src\vDirectionalLight.glsl" />
+    <None Include="src\vToon.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{44CDD105-9D58-41B8-9EF0-3924866DF065}</ProjectGuid>
