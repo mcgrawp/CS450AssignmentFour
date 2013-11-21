@@ -375,33 +375,6 @@ struct LightProperties {
 
 void init_light( void )
 {
-<<<<<<< HEAD
-	gSceneLight.ambient = vec3(1., 0., 0.);
-	gSceneLight.color = vec3(1., 0., 0.);
-	gSceneLight.position = vec3(0., 0., 0.);
-	gSceneLight.constantAttenuation = 1.;
-	gSceneLight.linearAttenuation = 1.;
-	gSceneLight.quadraticAttenuation = 1.;
-
-	glUseProgram(gPhongProgram);
-	gNormalMatrixLoc = glGetAttribLocation(gProgram, "NormalMatrix");
-	gLightPositionLoc = glGetAttribLocation(gProgram, "LightPosition");
-	gEyeDirectionLoc = glGetAttribLocation(gProgram, "EyeDirection");
-	gConstantAttenuationLoc = glGetAttribLocation(gProgram, "ConstantAttenuation");
-	gLinearAttenuationLoc = glGetAttribLocation(gProgram, "LinearAttenuation");
-	gQuadraticAttenuationLoc = glGetAttribLocation(gProgram, "QuadraticAttenuation");
-	
-	glUniform3fv(gLightPositionLoc, 1, gSceneLight.ambient);
-	
-	vec3 gEyeDirection(gCameraTranslate[0][3], gCameraTranslate[1][3], gCameraTranslate[2][3]);
-	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
-
-	glUniform1f(gConstantAttenuationLoc, gSceneLight.constantAttenuation);
-
-	glUniform1f(gLinearAttenuationLoc, gSceneLight.linearAttenuation);
-	
-	glUniform1f(gQuadraticAttenuationLoc, gSceneLight.quadraticAttenuation);
-=======
 	gAmbientLoc = glGetUniformLocation(gProgram, "Ambient");
 	gLightColorLoc = glGetUniformLocation(gProgram, "LightColor");
 	gLightDirectionLoc = glGetUniformLocation(gProgram, "LightDirection");
@@ -420,8 +393,6 @@ void init_light( void )
 	glUniform3fv(gHalfvectorLoc, 1, gHalfvector);
 	glUniform1f(gShininessLoc, 1.);
 	glUniform1f(gStrengthLoc, 1.);
->>>>>>> phonging it up
-
 }
 // OpenGL initialization
 void
@@ -433,12 +404,7 @@ init(mat4 projection)
 	gCameraTranslate = Angel::identity();
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
-<<<<<<< HEAD
-    gProgram = InitShader("./src/vshader.glsl", "./src/fshader.glsl");
-	//gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
-=======
     gProgram = InitShader( "./src/vDirectionalLight.glsl", "./src/fDirectionalLight.glsl" );
->>>>>>> phonging it up
     glUseProgram(gProgram);
 	gVertLoc = glGetAttribLocation(gProgram, "VertexPosition");
 	gNormLoc = glGetAttribLocation(gProgram, "VertexNormal");

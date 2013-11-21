@@ -9,6 +9,7 @@ uniform float Strength;
 
 in vec4 Color;
 in vec3 Normal;
+flat in int fFlag;
 
 out vec4 FragColor;
 
@@ -26,5 +27,11 @@ void main()
 
 	vec3 rgb = min(Color.rgb * scatteredLight + reflectedLight, vec3(1.0));
 
-	FragColor = vec4(rgb, Color.a);
+
+	if(fFlag == 0) {
+		FragColor = vec4(rgb, Color.a);
+	} 
+	else {
+		FragColor = Color;
+	}
 }
