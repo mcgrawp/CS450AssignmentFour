@@ -51,15 +51,13 @@ GLuint gSelectColorRLoc, gSelectColorGLoc, gSelectColorBLoc, gSelectColorALoc;
 GLint gToonShadesN = 10;
 
 
-GLuint gProgram, gPhongProgram;
+GLuint gProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
 
-GLint gNormalMatrixLoc;
-GLint gLightPositionLoc;
-GLint gEyeDirectionLoc;
-GLint gConstantAttenuationLoc;
-GLint gLinearAttenuationLoc;
-GLint gQuadraticAttenuationLoc;
+// Phong stuff
+GLint gAmbientLoc, gLightColorLoc, gLightDirectionLoc, gHalfvectorLoc, gShininessLoc, gStrengthLoc;
+vec3 gAmbient, gLightColor, gLightDirection, gHalfvector;
+GLfloat gShininess, gStrength;
 
 // camera transforms
 mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
@@ -377,6 +375,7 @@ struct LightProperties {
 
 void init_light( void )
 {
+<<<<<<< HEAD
 	gSceneLight.ambient = vec3(1., 0., 0.);
 	gSceneLight.color = vec3(1., 0., 0.);
 	gSceneLight.position = vec3(0., 0., 0.);
@@ -402,8 +401,27 @@ void init_light( void )
 	glUniform1f(gLinearAttenuationLoc, gSceneLight.linearAttenuation);
 	
 	glUniform1f(gQuadraticAttenuationLoc, gSceneLight.quadraticAttenuation);
+=======
+	gAmbientLoc = glGetUniformLocation(gProgram, "Ambient");
+	gLightColorLoc = glGetUniformLocation(gProgram, "LightColor");
+	gLightDirectionLoc = glGetUniformLocation(gProgram, "LightDirection");
+	gHalfvectorLoc = glGetUniformLocation(gProgram, "HalfVector");
+	gShininessLoc = glGetUniformLocation(gProgram, "Shininess");
+	gStrengthLoc = glGetUniformLocation(gProgram, "Strength");
+	gAmbient = vec3(.5, .5, .5);
+	gLightColor = vec3(1., 1., 1.);
+	gLightDirection = vec3(0., 1.5, 1.5);
+	gHalfvector = vec3(.1, 0., 0.);
+	gShininess = 1.;
+	gStrength = 1.5;
+	glUniform3fv(gAmbientLoc, 1, gAmbient);
+	glUniform3fv(gLightColorLoc, 1, gLightColor);
+	glUniform3fv(gLightDirectionLoc, 1, gLightDirection);
+	glUniform3fv(gHalfvectorLoc, 1, gHalfvector);
+	glUniform1f(gShininessLoc, 1.);
+	glUniform1f(gStrengthLoc, 1.);
+>>>>>>> phonging it up
 
-	glUseProgram(gProgram);
 }
 // OpenGL initialization
 void
@@ -415,17 +433,20 @@ init(mat4 projection)
 	gCameraTranslate = Angel::identity();
 	// Load shaders and use the resulting shader program
 	// doing this ahead of time so we can use it for setup of special objects
+<<<<<<< HEAD
     gProgram = InitShader("./src/vshader.glsl", "./src/fshader.glsl");
 	//gPhongProgram = InitShader("./src/vPhongPointLightShader.glsl", "./src/fPhongPointLightShader.glsl");
+=======
+    gProgram = InitShader( "./src/vDirectionalLight.glsl", "./src/fDirectionalLight.glsl" );
+>>>>>>> phonging it up
     glUseProgram(gProgram);
-	gVertLoc = glGetAttribLocation(gProgram, "vPosition");
-	gNormLoc = glGetAttribLocation(gProgram, "vNormal");
-	gColorLoc = glGetAttribLocation(gProgram, "vColor");
+	gVertLoc = glGetAttribLocation(gProgram, "VertexPosition");
+	gNormLoc = glGetAttribLocation(gProgram, "VertexNormal");
+	gColorLoc = glGetAttribLocation(gProgram, "VertexColor");
 
 	// build the special objects not loaded by user
 	init_grid();
 	init_manips();	
-	init_light();
 
 	for( int i = 0; i < obj_data.size(); i++ )
 	{
@@ -449,34 +470,8 @@ init(mat4 projection)
     // Initialize shader lighting parameters
     // RAM: No need to change these...we'll learn about the details when we
     // cover Illumination and Shading
-    point4 light_position(0., 1.25, 1., 1.0);
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-    color4 light_specular(1.0, 1.0, 1.0, 1.0);
+	init_light();
 
-    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    color4 material_specular(1.0, 0.8, 0.0, 1.0);
-    float  material_shininess = 100.0;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
-    glUniform4fv( glGetUniformLocation(gProgram, "AmbientProduct"),
-		  1, ambient_product );
-    glUniform4fv( glGetUniformLocation(gProgram, "DiffuseProduct"),
-		  1, diffuse_product );
-    glUniform4fv( glGetUniformLocation(gProgram, "SpecularProduct"),
-		  1, specular_product );
-
-    glUniform4fv( glGetUniformLocation(gProgram, "LightPosition"),
-		  1, light_position );
-
-    glUniform1f( glGetUniformLocation(gProgram, "Shininess"),
-		 material_shininess );
-
-	
 	//Set up selection colors and a gFlag -- copied from example
 	gSelectColorRLoc = glGetUniformLocation(gProgram,"selectionColorR");
 	gSelectColorGLoc = glGetUniformLocation(gProgram,"selectionColorG");
@@ -490,7 +485,7 @@ init(mat4 projection)
 	gSelectFlagLoc = glGetUniformLocation(gProgram, "flag");
 	glUniform1i(gSelectFlagLoc, gFlag);
 
-
+	
     gModelViewLoc = glGetUniformLocation(gProgram, "ModelView");
     gProjectionLoc = glGetUniformLocation(gProgram, "Projection");
 
@@ -583,9 +578,6 @@ draw(bool selection = false) {
 		mat4 rot = obj->rotateX * obj->rotateY * obj->rotateZ;
 		obj->model_view = gViewTransform * ( obj->translateXYZ * ( obj->scaleXYZ * rot) );
 		glUniformMatrix4fv(gModelViewLoc, 1, GL_TRUE, obj->model_view);
-		mat3 mv_inverse;
-		mat3 norm_matrix = Angel::transpose(mv_inverse);
-		glUniformMatrix3fv(gNormalMatrixLoc, 1, GL_TRUE, norm_matrix);
 		glBindVertexArray(obj->vao);
 		glDrawArrays(GL_TRIANGLES, 0, obj->data_soa.num_vertices);
 	}
@@ -1000,7 +992,7 @@ orthographic view volume.\nor\nCS450AssignmentFour P FOV NEAR FAR\nwhere FOV is 
     glewExperimental = GL_TRUE;
     glewInit();
 #endif
-
+	obj_data.push_back(new Obj("./Data/bunnyS.obj"));
 	init(projection);
 
     //NOTE:  callbacks must go after window is created!!!

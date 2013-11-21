@@ -2,32 +2,29 @@
 
 uniform vec3 Ambient;
 uniform vec3 LightColor;
+uniform vec3 LightDirection;
+uniform vec3 HalfVector;
 uniform float Shininess;
 uniform float Strength;
 
 in vec4 Color;
 in vec3 Normal;
 
-in vec3 LightDirection;
-in vec3 HalfVector;
-in float Attenuation;
-
 out vec4 FragColor;
 
 void main()
 {
-	// LightDirection, halfVector, and Attenuation are interpolated now, from vertex shader calculations
-
 	float diffuse = max(0.0, dot(Normal, LightDirection));
 	float specular = max(0.0, dot(Normal, HalfVector));
-
-	if (diffuse == 0.0)
+	if(diffuse == 0.0)
 		specular = 0.0;
 	else
-		specular = pow(specular, Shininess) * Strength;
+		specular = pow(specular, Shininess);
 
-	vec3 scatteredLight = Ambient + LightColor * diffuse * Attenuation;
-	vec3 reflectedLight = LightColor * specular * Attenuation;
+	vec3 scatteredLight = Ambient + LightColor * diffuse;
+	vec3 reflectedLight = LightColor * specular * Strength;
+
 	vec3 rgb = min(Color.rgb * scatteredLight + reflectedLight, vec3(1.0));
+
 	FragColor = vec4(rgb, Color.a);
 }

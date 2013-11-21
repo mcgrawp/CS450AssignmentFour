@@ -70,22 +70,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\fshader.glsl">
+    <None Include="src\fDirectionalLight.glsl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="src\vshader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="src\fPhongShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="src\vPhongShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="src\fPhongPointLightShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="src\vPhongPointLightShader.glsl">
+    <None Include="src\vDirectionalLight.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
