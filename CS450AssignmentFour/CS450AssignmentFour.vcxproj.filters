@@ -82,5 +82,11 @@
     <None Include="src\fToon.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="src\fPointLight.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="src\vPointLight.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

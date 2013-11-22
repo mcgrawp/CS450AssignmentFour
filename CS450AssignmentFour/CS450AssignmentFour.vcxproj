@@ -33,8 +33,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\fDirectionalLight.glsl" />
+    <None Include="src\fPointLight.glsl" />
     <None Include="src\fToon.glsl" />
     <None Include="src\vDirectionalLight.glsl" />
+    <None Include="src\vPointLight.glsl" />
     <None Include="src\vToon.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

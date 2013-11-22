@@ -57,12 +57,24 @@ GLuint gProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
 
 // Phong stuff
-GLint gAmbientLoc, gLightColorLoc, gLightDirectionLoc, gHalfvectorLoc, gShininessLoc, gStrengthLoc;
-vec3 gAmbient, gLightColor, gLightDirection, gHalfvector;
-GLfloat gShininess, gStrength;
-
+GLint gAmbientLoc, 
+	gLightColorLoc, 
+	gLightPositionLoc, 
+	gShininessLoc, 
+	gStrengthLoc, 
+	gConstantAttenuationLoc, 
+	gLinearAttenuationLoc, 
+	gQuadraticAttenuationLoc, 
+	gEyeDirectionLoc;
+vec3 gAmbient, gLightColor, gLightPosition;
+GLfloat gConstantAttenuation = 1.;
+GLfloat gLinearAttenuation = 1.;
+GLfloat gQuadraticAttenuation = 10.;
+GLfloat gShininess, gStrength = 1.;
+vec3 gEyeDirection = vec3(0., 0., -1.);
 // camera transforms
 mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
+
 
 // which manipulator is being dragged
 enum manip {
@@ -375,22 +387,33 @@ void init_light( void )
 {
 	gAmbientLoc = glGetUniformLocation(gProgram, "Ambient");
 	gLightColorLoc = glGetUniformLocation(gProgram, "LightColor");
-	gLightDirectionLoc = glGetUniformLocation(gProgram, "LightDirection");
-	gHalfvectorLoc = glGetUniformLocation(gProgram, "HalfVector");
+	gLightPositionLoc = glGetUniformLocation(gProgram, "LightPosition");
 	gShininessLoc = glGetUniformLocation(gProgram, "Shininess");
 	gStrengthLoc = glGetUniformLocation(gProgram, "Strength");
-	gAmbient = vec3(.5, .5, .5);
+	gConstantAttenuationLoc = glGetUniformLocation(gProgram, "ConstantAttenuation");
+	gLinearAttenuationLoc = glGetUniformLocation(gProgram, "LinearAttenuation");
+	gQuadraticAttenuationLoc = glGetUniformLocation(gProgram, "QuadraticAttenuation");
+	gEyeDirectionLoc = glGetUniformLocation(gProgram, "EyeDirection");
+
+	gAmbient = vec3(1., 1., 1.);
 	gLightColor = vec3(1., 1., 1.);
-	gLightDirection = vec3(0., 1.5, 1.5);
-	gHalfvector = vec3(.1, 0., 0.);
-	gShininess = 1.;
-	gStrength = 1.5;
+	gLightPosition = vec3(1., 1., 1.);
+	gShininess = 2.;
+	gStrength = 2.;
+	gEyeDirection = vec3(0., 0., 1.);
+	gConstantAttenuation = .403;
+	gLinearAttenuation = .309;
+	gQuadraticAttenuation = .401;
+
 	glUniform3fv(gAmbientLoc, 1, gAmbient);
 	glUniform3fv(gLightColorLoc, 1, gLightColor);
-	glUniform3fv(gLightDirectionLoc, 1, gLightDirection);
-	glUniform3fv(gHalfvectorLoc, 1, gHalfvector);
-	glUniform1f(gShininessLoc, 1.);
-	glUniform1f(gStrengthLoc, 1.);
+	glUniform3fv(gLightPositionLoc, 1, gLightPosition);
+	glUniform1f(gShininessLoc, gShininess);
+	glUniform1f(gStrengthLoc, gStrength);
+	glUniform1f(gConstantAttenuationLoc, gConstantAttenuation);
+	glUniform1f(gLinearAttenuationLoc, gLinearAttenuation);
+	glUniform1f(gQuadraticAttenuationLoc, gQuadraticAttenuation);
+	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
 }
 // OpenGL initialization
 void
@@ -407,7 +430,7 @@ init(mat4 projection)
 		gProgram = InitShader( "./src/vToon.glsl", "./src/fToon.glsl" );
 	}
 	else {
-		gProgram = InitShader( "./src/vDirectionalLight.glsl", "./src/fDirectionalLight.glsl" );
+		gProgram = InitShader( "./src/vPointLight.glsl", "./src/fPointLight.glsl" );
 	}
 	
 	glUseProgram(gProgram);
