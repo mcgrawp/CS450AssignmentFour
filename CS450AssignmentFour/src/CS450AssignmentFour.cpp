@@ -55,6 +55,7 @@ mat4 gInitProjection;
 
 GLuint gProgram;
 GLint gVertLoc, gNormLoc, gColorLoc;
+GLint gShadesNLoc;
 
 // Phong stuff
 GLint gAmbientLoc, 
@@ -427,9 +428,11 @@ init(mat4 projection)
 	// Load shaders and use the resulting shader program
 	// Check which shader we're to use now
 	if(gUseToon) {
+		printf("Using toon shader with %d shades\n", gToonShadesN);
 		gProgram = InitShader( "./src/vToon.glsl", "./src/fToon.glsl" );
 	}
 	else {
+		printf("Using normal phong shader\n");
 		gProgram = InitShader( "./src/vPointLight.glsl", "./src/fPointLight.glsl" );
 	}
 	
@@ -437,6 +440,10 @@ init(mat4 projection)
 	gVertLoc = glGetAttribLocation(gProgram, "VertexPosition");
 	gNormLoc = glGetAttribLocation(gProgram, "VertexNormal");
 	gColorLoc = glGetAttribLocation(gProgram, "VertexColor");
+
+	if (gUseToon) {
+		gShadesNLoc = glGetUniformLocation(gProgram, "shadesN");
+	}
 
 	// build the special objects not loaded by user
 	init_grid();
@@ -478,6 +485,10 @@ init(mat4 projection)
 
 	gSelectFlagLoc = glGetUniformLocation(gProgram, "flag");
 	glUniform1i(gSelectFlagLoc, gFlag);
+
+	if (gUseToon) {
+		glUniform1i(gShadesNLoc, gToonShadesN);
+	}
 
 	
     gModelViewLoc = glGetUniformLocation(gProgram, "ModelView");

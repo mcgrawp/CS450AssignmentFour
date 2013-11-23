@@ -11,6 +11,8 @@ uniform int selectionColorG;
 uniform int selectionColorB;
 uniform int selectionColorA;
 
+uniform int shadesN;
+
 in vec4 VertexColor;
 in vec4 VertexNormal;
 in vec4 VertexPosition;
@@ -19,6 +21,7 @@ mat3 NormalMatrix;
 
 out vec4 Color;
 out vec3 Normal;
+out vec4 Position;
 
 void main()
 {
@@ -26,10 +29,10 @@ void main()
 	Normal = vec3(normalize(NormalMatrix * VertexNormal.xyz));
 	gl_Position = Projection * ModelView * VertexPosition;
 
+	Position = ModelView * VertexPosition;
+
 	if(flag == 0) {
-		//Color = vec4(Normal, 1.);
-		// make a silly change from vDirectionalLight so we can see the difference in shaders
-		Color = vec4(Normal.z, Normal.x, Normal.y, 1.);
+		Color = vec4(1.,0.,.0,1.);
 	} 
 	else if(flag == 1) {
 		Color.r = float(selectionColorR)/float(255);

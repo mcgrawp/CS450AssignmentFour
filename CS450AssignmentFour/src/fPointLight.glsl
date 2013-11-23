@@ -38,7 +38,7 @@ void main()
 	} else {
 		specular = pow(specular, Shininess) * Strength;
 	}
-	vec3 scatteredLight = Ambient;// + LightColor * diffuse * attenuation;
+	vec3 scatteredLight = Ambient + LightColor * diffuse * attenuation;
 	vec3 reflectedLight = LightColor * specular * attenuation;
 
 	vec3 rgb = min(Color.rgb * scatteredLight + reflectedLight, vec3(1.0));
