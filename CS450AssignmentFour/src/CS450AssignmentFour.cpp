@@ -401,10 +401,10 @@ void init_light( void )
 	gLightPosition = vec3(1., 1., 1.);
 	gShininess = 2.;
 	gStrength = 2.;
-	gEyeDirection = vec3(0., 0., 1.);
 	gConstantAttenuation = .403;
 	gLinearAttenuation = .309;
 	gQuadraticAttenuation = .401;
+	gEyeDirection = vec3(0., 0., 1.);
 
 	glUniform3fv(gAmbientLoc, 1, gAmbient);
 	glUniform3fv(gLightColorLoc, 1, gLightColor);
