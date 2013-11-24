@@ -66,13 +66,13 @@ GLint gAmbientLoc,
 	gConstantAttenuationLoc, 
 	gLinearAttenuationLoc, 
 	gQuadraticAttenuationLoc, 
-	gEyeDirectionLoc;
+	gEyePositionLoc;
 vec3 gAmbient, gLightColor, gLightPosition;
 GLfloat gConstantAttenuation = 1.;
 GLfloat gLinearAttenuation = 1.;
 GLfloat gQuadraticAttenuation = 10.;
 GLfloat gShininess, gStrength = 1.;
-vec3 gEyeDirection = vec3(0., 0., -1.);
+vec3 gEyePosition = vec3(0., 0., -1.);
 // camera transforms
 mat4 gCameraTranslate, gCameraRotX, gCameraRotY, gCameraRotZ;
 
@@ -394,7 +394,7 @@ void init_light( void )
 	gConstantAttenuationLoc = glGetUniformLocation(gProgram, "ConstantAttenuation");
 	gLinearAttenuationLoc = glGetUniformLocation(gProgram, "LinearAttenuation");
 	gQuadraticAttenuationLoc = glGetUniformLocation(gProgram, "QuadraticAttenuation");
-	gEyeDirectionLoc = glGetUniformLocation(gProgram, "EyeDirection");
+	gEyePositionLoc = glGetUniformLocation(gProgram, "EyePosition");
 
 	gAmbient = vec3(1., 1., 1.);
 	gLightColor = vec3(1., 1., 1.);
@@ -404,7 +404,7 @@ void init_light( void )
 	gConstantAttenuation = .403;
 	gLinearAttenuation = .309;
 	gQuadraticAttenuation = .401;
-	gEyeDirection = vec3(0., 0., 1.);
+	gEyePosition = vec3(0., 0., 1.);
 
 	glUniform3fv(gAmbientLoc, 1, gAmbient);
 	glUniform3fv(gLightColorLoc, 1, gLightColor);
@@ -414,7 +414,7 @@ void init_light( void )
 	glUniform1f(gConstantAttenuationLoc, gConstantAttenuation);
 	glUniform1f(gLinearAttenuationLoc, gLinearAttenuation);
 	glUniform1f(gQuadraticAttenuationLoc, gQuadraticAttenuation);
-	glUniform3fv(gEyeDirectionLoc, 1, gEyeDirection);
+	glUniform3fv(gEyePositionLoc, 1, gEyePosition);
 }
 // OpenGL initialization
 void
