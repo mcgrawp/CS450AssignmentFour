@@ -23,6 +23,7 @@
     <ClInclude Include="include\mat.h" />
     <ClInclude Include="include\vec.h" />
     <ClInclude Include="src\Obj.h" />
+    <ClInclude Include="src\RayTracer.h" />
     <ClInclude Include="src\SceneLoader.h" />
   </ItemGroup>
   <ItemGroup>
